@@ -1,0 +1,27 @@
+﻿@* @section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/knockout@3.5.1/build/output/knockout-latest.js"></script>
+    <script src="~/js/task-viewmodel.js"></script>
+}
+
+<div>
+    <h1>Task List</h1>
+    <ul data-bind="foreach: tasks">
+        <li>
+            <span data-bind="text: name"></span> -
+            <span data-bind="text: description"></span>
+            <button data-bind="click: $parent.deleteTask">Delete</button>
+        </li>
+    </ul>
+
+    <h2>Add Task</h2>
+    <form data-bind="submit: addTask">
+        <input type="text" placeholder="Task Name" data-bind="value: newTaskName" />
+        <input type="text" placeholder="Description" data-bind="value: newTaskDescription" />
+        <button type="submit">Add Task</button>
+    </form>
+</div>
+ *@
+
+
+
+ <h1>I Love Hudaif</h1>
