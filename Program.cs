@@ -43,6 +43,19 @@ using TodoList1.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Add session services
+builder.Services.AddDistributedMemoryCache(); // For storing session in memory
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
+    options.Cookie.HttpOnly = true; // Prevent client-side script access
+    options.Cookie.IsEssential = true; // Required for GDPR compliance
+});
+
+
+// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -76,9 +89,12 @@ else
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDo List API V1");
-        options.RoutePrefix = string.Empty; // Make Swagger UI available at the root
+        options.RoutePrefix = "swagger-api"; // Make Swagger UI available at the root
     });
 }
+
+// Use session middleware
+app.UseSession();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -91,7 +107,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=User}/{action=Index}/{id?}");
+    pattern: "{controller=User}/{action=SignUp}/{id?}");
 
 app.UseSwagger();
 app.UseSwaggerUI();

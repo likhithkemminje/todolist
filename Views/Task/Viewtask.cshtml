@@ -1,0 +1,72 @@
+﻿@{
+    ViewData["Title"] = "My Tasks";
+    var userId = ViewData["UserId"];
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between">
+        <h2>Your Tasks</h2>
+        <!-- Logout button -->
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Tasks list -->
+    <div id="tasksContainer" class="mt-4">
+        <!-- Tasks will be populated here via JavaScript -->
+    </div>
+</div>
+
+<script>
+    // Logout function to clear session and redirect to Login page
+    function logout() {
+        if (confirm("Are you sure you want to log out?")) {
+            // Perform session clear and redirect
+            $.ajax({
+                url: "/User/Logout",
+                type: "GET",
+                success: function (response) {
+                    window.location.href = "/User/Login"; // Redirect to Login page after logout
+                },
+                error: function (xhr) {
+                    alert("Logout failed. Please try again.");
+                }
+            });
+        }
+    }
+
+    // Fetch tasks of the logged-in user
+    $(document).ready(function () {
+        // Get UserId from ViewData
+        const userId = @userId;
+
+        if (userId) {
+            // Call the API to fetch tasks for the logged-in user
+            $.ajax({
+                url: `/api/Task/{id}`, // API endpoint to fetch tasks for the user
+                type: "GET",
+                success: function (response) {
+                    if (response && response.length > 0) {
+                        let tasksHtml = "";
+                        response.forEach(task => {
+                            tasksHtml += `
+                                    <div class="task-card mb-3 p-3 border rounded">
+                                        <h4>${task.title}</h4>
+                                        <p>${task.description}</p>
+                                        <small class="text-muted">Due: ${task.dueDate}</small>
+                                    </div>
+                                `;
+                        });
+                        $("#tasksContainer").html(tasksHtml); // Populate the tasks list
+                    } else {
+                        $("#tasksContainer").html("<p>No tasks found.</p>");
+                    }
+                },
+                error: function (xhr) {
+                    $("#tasksContainer").html("<p>Failed to load tasks. Please try again later.</p>");
+                }
+            });
+        } else {
+            window.location.href = "/User/Login"; // Redirect to login if user is not authenticated
+        }
+    });
+</script>

@@ -7,7 +7,7 @@ namespace TodoList1.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TaskController : ControllerBase
+    public class TaskController : Controller
     {
         private readonly ApplicationDbContext _context;
 
@@ -131,5 +131,24 @@ namespace TodoList1.Controllers
             // Return the list of tasks
             return Ok(tasks);
         }
+
+        [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public IActionResult ViewTask()
+        {
+            // Get the logged-in user's ID from session
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "User"); // Redirect to login if user is not authenticated
+            }
+
+            // Pass the userId to the view using ViewData
+            ViewData["UserId"] = userId;
+
+            return View();
+        }
+
     }
 }

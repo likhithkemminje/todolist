@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace TodoList1.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]/[action]")]
     public class UserController : Controller
     {
 
@@ -71,14 +71,31 @@ namespace TodoList1.Controllers
                 return Unauthorized("Invalid email or password.");
             }
 
-            return Ok("Login successful");
+            // Store user information in session
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+            HttpContext.Session.SetString("Username", user.Username);
+
+            return Ok(new
+            {
+                Message = "Login successful",
+                Username = user.Username // You can return additional data if needed
+            });
         }
 
         [HttpGet]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public IActionResult SignUP()
+        public IActionResult Login()
         {
             return View();
         }
+
+        [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = true)] // Hides this method from Swagger API documentation
+        public IActionResult SignUp()
+        {
+            return View();
+        }
+
+
     }
 }

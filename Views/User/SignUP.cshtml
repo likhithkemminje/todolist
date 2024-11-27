@@ -2,5 +2,89 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
+    ViewData["Title"] = "Sign Up";
 }
-<h1>fgjh</h1>
+
+<div class="container mt-5">
+    <h2 class="text-center">Sign Up</h2>
+    <div data-bind="with: signupViewModel">
+        <form>
+            <div class="form-group">
+                <label for="Email">Email</label>
+                <input type="email" class="form-control" id="Email" data-bind="value: email" placeholder="Enter your email" required />
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="Username">Username</label>
+                <input type="text" class="form-control" id="Username" data-bind="value: username" placeholder="Enter your username" required />
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="Password">Password</label>
+                <input type="password" class="form-control" id="Password" data-bind="value: password" placeholder="Enter your password" required />
+            </div>
+
+            <button type="button" class="btn btn-primary mt-4 w-100" data-bind="click: signupUser">Sign Up</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <p data-bind="text: errorMessage, visible: errorMessage" class="text-danger"></p>
+        </div>
+
+        <!-- Add "Already have an account?" section -->
+        <div class="text-center mt-3">
+            <p>
+                Already have an account?
+                <a href="/User/Login" class="text-primary">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/knockout@3.5.1/build/output/knockout-latest.js"></script>
+
+<script>
+    function SignUpViewModel() {
+        var self = this;
+
+        self.email = ko.observable("");
+        self.password = ko.observable("");
+        self.username = ko.observable("");
+        self.errorMessage = ko.observable("");
+
+        self.signupUser = function () {
+            self.errorMessage("");
+
+            // Validate input
+            if (!self.email() || !self.password() || !self.username()) {
+                self.errorMessage("Email, Username, and Password are required.");
+                return;
+            }
+
+            // Perform AJAX POST request
+            $.ajax({
+                url: "/User/PostUser/SignUp", // Adjust endpoint as necessary
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    Email: self.email(),
+                    PasswordHash: self.password(), // Backend expects PasswordHash
+                    Username: self.username()
+                }),
+                success: function (response) {
+                    alert("Signup successful!");
+                    window.location.href = "/User/Login"; // Redirect to login page
+                },
+                error: function (xhr) {
+                    self.errorMessage(xhr.responseJSON?.title || "Signup failed. Please try again.");
+                }
+            });
+        };
+    }
+
+    // Apply bindings after DOM is ready
+    $(document).ready(function () {
+        ko.applyBindings({ signupViewModel: new SignUpViewModel() });
+    });
+</script>
