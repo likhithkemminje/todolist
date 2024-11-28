@@ -6,7 +6,7 @@ using TodoList1.Data;
 namespace TodoList1.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]/[action]")]
     public class TaskController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -134,7 +134,7 @@ namespace TodoList1.Controllers
 
         [HttpGet]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public IActionResult ViewTask()
+        public IActionResult Viewtask()
         {
             // Get the logged-in user's ID from session
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -149,6 +149,13 @@ namespace TodoList1.Controllers
 
             return View();
         }
+
+       /* [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public IActionResult Viewtask()
+        {
+            return View();
+        }*/
 
     }
 }

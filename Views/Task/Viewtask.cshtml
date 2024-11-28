@@ -3,11 +3,21 @@
     var userId = ViewData["UserId"];
 }
 
+@{
+    ViewData["Title"] = "Your Tasks";
+}
+
 <div class="container mt-5">
     <div class="d-flex justify-content-between">
         <h2>Your Tasks</h2>
         <!-- Logout button -->
         <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Add task input -->
+    <div class="input-group mt-4">
+        <input type="text" id="newTaskInput" class="form-control" placeholder="Enter a new task">
+        <button class="btn btn-success" onclick="addTask()">Add</button>
     </div>
 
     <!-- Tasks list -->
@@ -16,33 +26,24 @@
     </div>
 </div>
 
+
 <script>
-    // Logout function to clear session and redirect to Login page
+    // Logout function to redirect to the Login page
     function logout() {
         if (confirm("Are you sure you want to log out?")) {
-            // Perform session clear and redirect
-            $.ajax({
-                url: "/User/Logout",
-                type: "GET",
-                success: function (response) {
-                    window.location.href = "/User/Login"; // Redirect to Login page after logout
-                },
-                error: function (xhr) {
-                    alert("Logout failed. Please try again.");
-                }
-            });
+            window.location.href = "/User/Login"; // Redirect to login page
         }
     }
 
     // Fetch tasks of the logged-in user
     $(document).ready(function () {
-        // Get UserId from ViewData
-        const userId = @userId;
+        // Get UserId from ViewData (rendered on the server-side)
+        const userId = @Html.Raw(ViewData["UserId"]); // Ensure you set this in your controller when returning the view
 
         if (userId) {
             // Call the API to fetch tasks for the logged-in user
             $.ajax({
-                url: `/api/Task/{id}`, // API endpoint to fetch tasks for the user
+                url: `/Task/GetTasksByUserId/{id}`, // API endpoint to fetch tasks for the user
                 type: "GET",
                 success: function (response) {
                     if (response && response.length > 0) {
@@ -53,10 +54,14 @@
                                         <h4>${task.title}</h4>
                                         <p>${task.description}</p>
                                         <small class="text-muted">Due: ${task.dueDate}</small>
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button class="btn btn-warning btn-sm me-2" onclick="updateTask(${task.id})">Update</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Delete</button>
+                                        </div>
                                     </div>
                                 `;
                         });
-                        $("#tasksContainer").html(tasksHtml); // Populate the tasks list
+                        $("#tasksContainer").html(tasksHtml); // Populate the tasks container
                     } else {
                         $("#tasksContainer").html("<p>No tasks found.</p>");
                     }
@@ -66,7 +71,47 @@
                 }
             });
         } else {
+            alert("User authentication required. Redirecting to login...");
             window.location.href = "/User/Login"; // Redirect to login if user is not authenticated
         }
     });
+
+    // Placeholder functions for update and delete (implement API integration)
+    function updateTask(taskId) {
+        const newTitle = prompt("Enter the new title for the task:");
+        if (newTitle) {
+            // API call to update the task
+            $.ajax({
+                url: `/Task/UpdateTask/{id}`,
+                type: "PUT",
+                data: JSON.stringify({ title: newTitle }), // Update with relevant task details
+                contentType: "application/json",
+                success: function () {
+                    alert("Task updated successfully.");
+                    location.reload(); // Refresh the page to show updated tasks
+                },
+                error: function () {
+                    alert("Failed to update the task.");
+                }
+            });
+        }
+    }
+
+    function deleteTask(taskId) {
+        if (confirm("Are you sure you want to delete this task?")) {
+            // API call to delete the task
+            $.ajax({
+                url: `/Task/DeleteTask/{id}`,
+                type: "DELETE",
+                success: function () {
+                    alert("Task deleted successfully.");
+                    location.reload(); // Refresh the page to show updated tasks
+                },
+                error: function () {
+                    alert("Failed to delete the task.");
+                }
+            });
+        }
+    }
 </script>
+

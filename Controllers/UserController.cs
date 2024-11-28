@@ -49,6 +49,7 @@ namespace TodoList1.Controllers
             return Ok("User posted successfully");
         }
 
+
         [HttpPost("Login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
@@ -87,6 +88,7 @@ namespace TodoList1.Controllers
         public IActionResult Login()
         {
             return View();
+            
         }
 
         [HttpGet]
@@ -95,6 +97,16 @@ namespace TodoList1.Controllers
         {
             return View();
         }
+
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            // Clear session or authentication cookies
+            ////HttpContext.Session.Clear(); // If using sessions
+            //Response.Cookies.Delete(".AspNetCore.Session"); // If using cookie-based authentication
+            return RedirectToAction("Login", "User"); // Redirect to the Login page
+        }
+
 
 
     }
