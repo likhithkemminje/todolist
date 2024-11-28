@@ -40,7 +40,7 @@ namespace TodoList1.Controllers
                 await _context.SaveChangesAsync();
 
                 // Return the created task and a 201 Created status
-                return Ok("Task added successfully");
+                return Ok(task);
             }
 
             return BadRequest("Invalid task data");

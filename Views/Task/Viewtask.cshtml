@@ -21,13 +21,17 @@
         <ul data-bind="foreach: tasks">
             <li>
                 <span data-bind="text: taskName"></span>
+                <!-- Add a delete button for each task -->
+                <button class="btn btn-danger btn-sm" data-bind="click: function() { $parent.deleteTask($data) }">Delete</button>
             </li>
         </ul>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
 
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
 <script>
     // Knockout.js ViewModel to manage tasks
     function TaskViewModel() {
@@ -35,67 +39,88 @@
         self.tasks = ko.observableArray([]); // Array to hold tasks
         self.newTask = ko.observable(""); // New task input value
 
-        // Function to fetch tasks for the user
+        // Fetch tasks for the user
         self.fetchTasks = function (userId) {
-            // Use template literals to embed userId dynamically in the URL
             fetch(`/Task/GetTasksByUserId/${userId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (Array.isArray(data)) {
-                        // Map the data into task objects with taskName
+                        // Map the data into task objects with taskName and id
                         self.tasks(data.map(task => ({
-                            taskName: task.taskName  // Assuming 'taskName' is the property of each task
+                            taskName: task.taskName,
+                            id: task.id // Ensure task has the correct id
                         })));
                     }
                 })
                 .catch(error => console.error("Error fetching tasks:", error));
         };
 
-
-        // Function to add a new task
+        // Add a new task
         self.addTask = function () {
             var newTaskName = self.newTask().trim(); // Get the value of the new task
+            // Add the new task to the tasks array
+            // self.tasks.push({ taskName: newTaskName });
             if (newTaskName) {
-                // Add the new task to the tasks array
-                self.tasks.push({ taskName: newTaskName });
-
-                // Optionally, send the new task to the backend API for persistence
                 fetch(`/Task/PostTask/AddTasks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ taskName: newTaskName, userId: userId })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Task added:', data);
-                })
-                .catch(error => console.error('Error adding task:', error));
+                    .then(response => response.json())
+                    .then(data => {
+                        // Ensure backend returns task with id
+                        var newTask = {
+                            taskName: data.taskName, // Returned taskName
+                            id: data.id // Returned id
+                        };
+                        console.log(newTask)
+                        // Add new task to observable array
+                        self.tasks.push(newTask);
 
-                // Clear the new task input
-                self.newTask(""); 
+                        // Clear input
+                        self.newTask("");
+                    })
+                    .catch(error => console.error('Error adding task:', error));
             } else {
                 alert('Please enter a task.');
             }
         };
 
-        // Function to initialize and load tasks
+        // Delete a task
+        self.deleteTask = function (task) {
+            fetch(`/Task/DeleteTask/${task.id}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Remove task from observable array
+                        self.tasks.remove(task);
+                    } else {
+                        alert('Error deleting task');
+                    }
+                })
+                .catch(error => console.error('Error deleting task:', error));
+        };
+
+        // Initialize and load tasks
         self.init = function (userId) {
             self.fetchTasks(userId);
         };
     }
 
-    // Initialize the ViewModel and bind it to the view
+    // Initialize ViewModel and bind to view
     var viewModel = new TaskViewModel();
-    var userId = @ViewData["UserId"];  // Dynamically pass the userId from ViewData
-    viewModel.init(userId);  // Load tasks for the specified user
+    var userId = @ViewData["UserId"];  // Dynamically pass userId from ViewData
+    viewModel.init(userId);  // Fetch tasks for the user
 
-    // Apply Knockout.js bindings
-    ko.applyBindings(viewModel);
+    ko.applyBindings(viewModel); // Apply Knockout.js bindings
 
-    // Logout function to redirect to the Login page
+    // Logout function
     function logout() {
         if (confirm("Are you sure you want to log out?")) {
             window.location.href = "/User/Login"; // Redirect to login page
         }
     }
 </script>
+
+
