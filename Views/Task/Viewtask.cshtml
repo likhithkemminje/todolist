@@ -1,10 +1,6 @@
 ﻿@{
-    ViewData["Title"] = "My Tasks";
-    var userId = ViewData["UserId"];
-}
-
-@{
     ViewData["Title"] = "Your Tasks";
+    var userId = ViewData["UserId"];
 }
 
 <div class="container mt-5">
@@ -16,102 +12,90 @@
 
     <!-- Add task input -->
     <div class="input-group mt-4">
-        <input type="text" id="newTaskInput" class="form-control" placeholder="Enter a new task">
-        <button class="btn btn-success" onclick="addTask()">Add</button>
+        <input type="text" id="newTaskInput" class="form-control" placeholder="Enter a new task" data-bind="value: newTask">
+        <button class="btn btn-success" data-bind="click: addTask">Add</button>
     </div>
 
     <!-- Tasks list -->
     <div id="tasksContainer" class="mt-4">
-        <!-- Tasks will be populated here via JavaScript -->
+        <ul data-bind="foreach: tasks">
+            <li>
+                <span data-bind="text: taskName"></span>
+            </li>
+        </ul>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
 
 <script>
+    // Knockout.js ViewModel to manage tasks
+    function TaskViewModel() {
+        var self = this;
+        self.tasks = ko.observableArray([]); // Array to hold tasks
+        self.newTask = ko.observable(""); // New task input value
+
+        // Function to fetch tasks for the user
+        self.fetchTasks = function (userId) {
+            // Use template literals to embed userId dynamically in the URL
+            fetch(`/Task/GetTasksByUserId/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        // Map the data into task objects with taskName
+                        self.tasks(data.map(task => ({
+                            taskName: task.taskName  // Assuming 'taskName' is the property of each task
+                        })));
+                    }
+                })
+                .catch(error => console.error("Error fetching tasks:", error));
+        };
+
+
+        // Function to add a new task
+        self.addTask = function () {
+            var newTaskName = self.newTask().trim(); // Get the value of the new task
+            if (newTaskName) {
+                // Add the new task to the tasks array
+                self.tasks.push({ taskName: newTaskName });
+
+                // Optionally, send the new task to the backend API for persistence
+                fetch(`/Task/PostTask/AddTasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskName: newTaskName, userId: userId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Task added:', data);
+                })
+                .catch(error => console.error('Error adding task:', error));
+
+                // Clear the new task input
+                self.newTask(""); 
+            } else {
+                alert('Please enter a task.');
+            }
+        };
+
+        // Function to initialize and load tasks
+        self.init = function (userId) {
+            self.fetchTasks(userId);
+        };
+    }
+
+    // Initialize the ViewModel and bind it to the view
+    var viewModel = new TaskViewModel();
+    var userId = @ViewData["UserId"];  // Dynamically pass the userId from ViewData
+    viewModel.init(userId);  // Load tasks for the specified user
+
+    // Apply Knockout.js bindings
+    ko.applyBindings(viewModel);
+
     // Logout function to redirect to the Login page
     function logout() {
         if (confirm("Are you sure you want to log out?")) {
             window.location.href = "/User/Login"; // Redirect to login page
         }
     }
-
-    // Fetch tasks of the logged-in user
-    $(document).ready(function () {
-        // Get UserId from ViewData (rendered on the server-side)
-        const userId = @Html.Raw(ViewData["UserId"]); // Ensure you set this in your controller when returning the view
-
-        if (userId) {
-            // Call the API to fetch tasks for the logged-in user
-            $.ajax({
-                url: `/Task/GetTasksByUserId/{id}`, // API endpoint to fetch tasks for the user
-                type: "GET",
-                success: function (response) {
-                    if (response && response.length > 0) {
-                        let tasksHtml = "";
-                        response.forEach(task => {
-                            tasksHtml += `
-                                    <div class="task-card mb-3 p-3 border rounded">
-                                        <h4>${task.title}</h4>
-                                        <p>${task.description}</p>
-                                        <small class="text-muted">Due: ${task.dueDate}</small>
-                                        <div class="d-flex justify-content-end mt-2">
-                                            <button class="btn btn-warning btn-sm me-2" onclick="updateTask(${task.id})">Update</button>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Delete</button>
-                                        </div>
-                                    </div>
-                                `;
-                        });
-                        $("#tasksContainer").html(tasksHtml); // Populate the tasks container
-                    } else {
-                        $("#tasksContainer").html("<p>No tasks found.</p>");
-                    }
-                },
-                error: function (xhr) {
-                    $("#tasksContainer").html("<p>Failed to load tasks. Please try again later.</p>");
-                }
-            });
-        } else {
-            alert("User authentication required. Redirecting to login...");
-            window.location.href = "/User/Login"; // Redirect to login if user is not authenticated
-        }
-    });
-
-    // Placeholder functions for update and delete (implement API integration)
-    function updateTask(taskId) {
-        const newTitle = prompt("Enter the new title for the task:");
-        if (newTitle) {
-            // API call to update the task
-            $.ajax({
-                url: `/Task/UpdateTask/{id}`,
-                type: "PUT",
-                data: JSON.stringify({ title: newTitle }), // Update with relevant task details
-                contentType: "application/json",
-                success: function () {
-                    alert("Task updated successfully.");
-                    location.reload(); // Refresh the page to show updated tasks
-                },
-                error: function () {
-                    alert("Failed to update the task.");
-                }
-            });
-        }
-    }
-
-    function deleteTask(taskId) {
-        if (confirm("Are you sure you want to delete this task?")) {
-            // API call to delete the task
-            $.ajax({
-                url: `/Task/DeleteTask/{id}`,
-                type: "DELETE",
-                success: function () {
-                    alert("Task deleted successfully.");
-                    location.reload(); // Refresh the page to show updated tasks
-                },
-                error: function () {
-                    alert("Failed to delete the task.");
-                }
-            });
-        }
-    }
 </script>
-
