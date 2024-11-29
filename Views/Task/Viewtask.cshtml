@@ -17,23 +17,37 @@
     </div>
 
     <!-- Tasks list -->
-    <div id="tasksContainer" class="mt-4">
-        <ul data-bind="foreach: tasks">
-            <li>
-                <span data-bind="text: taskName"></span>
-                <!-- Add a delete button for each task -->
-                <button class="btn btn-danger btn-sm" data-bind="click: function() { $parent.deleteTask($data) }">Delete</button>
+    <div id="tasksContainer" class="mt-4 row">
+        <!-- Task Cards -->
+        <div class="col-md-4 mb-4" data-bind="foreach: tasks">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Task Name with Strike-through when done -->
+                    <h5 class="card-title" data-bind="text: taskName, css: { 'text-decoration-line-through': status() }"></h5>
 
+                    <div class="d-flex justify-content-between">
+                        <!-- Mark as Done Button -->
+                        <button class="btn btn-success btn-sm me-2"
+                                data-bind="click: function() { $parent.markTaskAsDone($data) }, visible: !status()">
+                            Mark as Done
+                        </button>
 
-                <!-- Update Button -->
-                <button class="btn btn-primary btn-sm" data-bind="click: function() { $parent.startEditTask($data) }">Edit</button>
+                        <!-- Checkmark -->
+                        <span class="text-success" data-bind="visible: status()">
+                            <i class="bi bi-check-circle"></i> Done
+                        </span>
 
+                        <!-- Delete Button -->
+                        <button class="btn btn-danger btn-sm" data-bind="click: function() { $parent.deleteTask($data) }">Delete</button>
 
-            </li>
-        </ul>
+                        <!-- Update Button -->
+                        <button class="btn btn-primary btn-sm" data-bind="click: function() { $parent.startEditTask($data) }">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
 
 <!-- Edit Task Section -->
 <div id="editTaskSection" class="mt-4" data-bind="visible: isEditing">
@@ -51,13 +65,10 @@
 
     // Knockout.js ViewModel to manage tasks
     function TaskViewModel() {
-        
-
         var self = this;
         self.UserId = null;
         self.tasks = ko.observableArray([]); // Array to hold tasks
         self.newTask = ko.observable(""); // New task input value
-
 
         // Observables for editing tasks
         self.isEditing = ko.observable(false); // To control visibility of the edit section
@@ -70,49 +81,16 @@
                 .then(response => response.json())
                 .then(data => {
                     if (Array.isArray(data)) {
-                        // Map the data into task objects with taskName and id
+                        // Map the data into task objects with taskName, id, and status
                         self.tasks(data.map(task => ({
                             taskName: task.taskName,
-                            id: task.id // Ensure task has the correct id
+                            id: task.id,
+                            status: ko.observable(task.status || false) // Ensure status is an observable
                         })));
                     }
                 })
                 .catch(error => console.error("Error fetching tasks:", error));
         };
-
-        // Add a new task
-        self.addTask = function () {
-            var newTaskName = self.newTask().trim(); // Get the value of the new task
-            // Add the new task to the tasks array
-            // self.tasks.push({ taskName: newTaskName });
-            if (newTaskName) {
-                fetch(`/Task/PostTask/AddTasks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ taskName: newTaskName, userId: userId })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Ensure backend returns task with id
-                        var newTask = {
-                            taskName: data.taskName, // Returned taskName
-                            id: data.id // Returned id
-                        };
-                        console.log(newTask)
-                        // Add new task to observable array
-                        self.tasks.push(newTask);
-
-                        // Clear input
-                        self.newTask("");
-                    })
-                    .catch(error => console.error('Error adding task:', error));
-            } else {
-                alert('Please enter a task.');
-            }
-        };
-    
-
-
         // Start editing a task
         self.startEditTask = function (task) {
             self.isEditing(true);
@@ -140,12 +118,12 @@
                     .then(response => {
                         if (response.ok) {
                             // Update the task in the observable array
-                            
+
                             var taskToUpdate = self.tasks().find(task => task.id === taskId);
                             if (taskToUpdate) {
                                 taskToUpdate.taskName = updatedTaskName;
                                 self.fetchTasks(self.UserID);
-                                 // Notify Knockout about the update
+                                // Notify Knockout about the update
                             }
 
                             // Clear editing state
@@ -158,9 +136,49 @@
             } else {
                 alert("Task name cannot be empty.");
             }
-            
+
         };
-        
+        // Add a new task
+        self.addTask = function () {
+            var newTaskName = self.newTask().trim(); // Get the value of the new task
+            if (newTaskName) {
+                fetch(`/Task/PostTask/AddTasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskName: newTaskName, userId: userId })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var newTask = {
+                            taskName: data.taskName,
+                            id: data.id,
+                            status: ko.observable(false) // Default status is false (not done)
+                        };
+                        self.tasks.push(newTask);
+                        self.newTask(""); // Clear input
+                    })
+                    .catch(error => console.error('Error adding task:', error));
+            } else {
+                alert('Please enter a task.');
+            }
+        };
+
+        // Mark task as done
+        self.markTaskAsDone = function (task) {
+            fetch(`/Task/MarkTaskDone/mark-done/${task.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Update the status observable to true (task done)
+                        task.status(true); // This will trigger the Knockout.js update for strike-through
+                    } else {
+                        alert("Failed to mark the task as done.");
+                    }
+                })
+                .catch(error => console.error("Error marking task as done:", error));
+        };
 
         // Delete a task
         self.deleteTask = function (task) {
@@ -169,7 +187,6 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        // Remove task from observable array
                         self.tasks.remove(task);
                     } else {
                         alert('Error deleting task');
@@ -184,6 +201,7 @@
             self.fetchTasks(userId);
         };
     }
+
 
     // Initialize ViewModel and bind to view
     var viewModel = new TaskViewModel();
