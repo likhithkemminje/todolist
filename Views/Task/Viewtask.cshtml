@@ -23,9 +23,24 @@
                 <span data-bind="text: taskName"></span>
                 <!-- Add a delete button for each task -->
                 <button class="btn btn-danger btn-sm" data-bind="click: function() { $parent.deleteTask($data) }">Delete</button>
+
+
+                <!-- Update Button -->
+                <button class="btn btn-primary btn-sm" data-bind="click: function() { $parent.startEditTask($data) }">Edit</button>
+
+
             </li>
         </ul>
     </div>
+</div>
+
+
+<!-- Edit Task Section -->
+<div id="editTaskSection" class="mt-4" data-bind="visible: isEditing">
+    <h3>Edit Task</h3>
+    <input type="text" class="form-control" placeholder="Edit task name" data-bind="value: editedTaskName">
+    <button class="btn btn-primary mt-2" data-bind="click: updateTask">Save</button>
+    <button class="btn btn-secondary mt-2" data-bind="click: cancelEdit">Cancel</button>
 </div>
 
 
@@ -33,11 +48,21 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
 <script>
+
     // Knockout.js ViewModel to manage tasks
     function TaskViewModel() {
+        
+
         var self = this;
+        self.UserId = null;
         self.tasks = ko.observableArray([]); // Array to hold tasks
         self.newTask = ko.observable(""); // New task input value
+
+
+        // Observables for editing tasks
+        self.isEditing = ko.observable(false); // To control visibility of the edit section
+        self.editedTaskId = ko.observable(null); // ID of the task being edited
+        self.editedTaskName = ko.observable(""); // Edited task name
 
         // Fetch tasks for the user
         self.fetchTasks = function (userId) {
@@ -85,6 +110,57 @@
                 alert('Please enter a task.');
             }
         };
+    
+
+
+        // Start editing a task
+        self.startEditTask = function (task) {
+            self.isEditing(true);
+            self.editedTaskId(task.id);
+            self.editedTaskName(task.taskName);
+        };
+
+        // Cancel editing
+        self.cancelEdit = function () {
+            self.isEditing(false);
+            self.editedTaskId(null);
+            self.editedTaskName("");
+        };
+
+        // Update a task
+        self.updateTask = function (task) {
+            var taskId = self.editedTaskId();
+            var updatedTaskName = self.editedTaskName().trim();
+            if (taskId && updatedTaskName) {
+                fetch(`/Task/UpdateTask/${taskId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: taskId, taskName: updatedTaskName, userId: userId })
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Update the task in the observable array
+                            
+                            var taskToUpdate = self.tasks().find(task => task.id === taskId);
+                            if (taskToUpdate) {
+                                taskToUpdate.taskName = updatedTaskName;
+                                self.fetchTasks(self.UserID);
+                                 // Notify Knockout about the update
+                            }
+
+                            // Clear editing state
+                            self.cancelEdit();
+                        } else {
+                            alert("Error updating task.");
+                        }
+                    })
+                    .catch(error => console.error("Error updating task:", error));
+            } else {
+                alert("Task name cannot be empty.");
+            }
+            
+        };
+        
 
         // Delete a task
         self.deleteTask = function (task) {
@@ -104,6 +180,7 @@
 
         // Initialize and load tasks
         self.init = function (userId) {
+            self.UserID = userId;
             self.fetchTasks(userId);
         };
     }
@@ -112,7 +189,6 @@
     var viewModel = new TaskViewModel();
     var userId = @ViewData["UserId"];  // Dynamically pass userId from ViewData
     viewModel.init(userId);  // Fetch tasks for the user
-
     ko.applyBindings(viewModel); // Apply Knockout.js bindings
 
     // Logout function
