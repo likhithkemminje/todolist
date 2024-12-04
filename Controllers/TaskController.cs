@@ -158,8 +158,18 @@ public class TaskController : Controller
     {
         // Fetch tasks associated with the specified userId
         var tasks = await _context.Tasks
-                                  .Where(t => t.UserId == id)
-                                  .ToListAsync();
+    .Where(t => t.UserId == id)
+    .Select(t => new
+    {
+        Id = t.Id,
+        TaskName = t.TaskName,
+        Status = t.Status,
+        CreatedDate = t.CreatedDate,
+        CompletedDate = t.CompletedDate,
+        UserId = t.UserId,
+       
+    })
+    .ToListAsync();
 
         // Check if any tasks were found
         if (tasks == null || tasks.Count == 0)

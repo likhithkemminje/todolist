@@ -17,52 +17,82 @@
     </div>
 
     <!-- Tasks list -->
-    <div id="tasksContainer" class="mt-4 row">
-        <!-- Task Cards -->
-        <div class="col-md-4 mb-4" data-bind="foreach: tasks">
-            <div class="card">
-                <div class="card-body">
-                    <!-- Task Name with Strike-through when done -->
-                    <h5 class="card-title" data-bind="text: taskName, css: { 'text-decoration-line-through': status() }"></h5>
+    <div id="tasksContainer" class="mt-4">
+        <!-- Task Rows -->
+        <div class="row" data-bind="foreach: tasksInRows">
+            <div class="col-md-4 mb-4" data-bind="foreach: $data">
+                <!-- Task Card -->
+                <div class="card">
+                    <div class="card-body">
+                        <!-- Task Name with Strike-through when done -->
+                        <h5 class="card-title" data-bind="text: taskName, css: { 'text-decoration-line-through': status() }"></h5>
 
-                    <div class="d-flex justify-content-between">
-                        <!-- Mark as Done Button -->
-                        <button class="btn btn-sm me-2"
-                                data-bind="click: function() { $parent.toggleTaskStatus($data) },
+                        <div class="d-flex justify-content-between">
+                            <!-- Mark as Done Button -->
+                            <button class="btn btn-sm me-2"
+                                    data-bind="click: function() { $parentContext.$parent.toggleTaskStatus($data) },
                    visible: status() === false">
-                            Mark as Done
-                        </button>
+                                Mark as Done
+                            </button>
 
-                        <button class="btn btn-warning btn-sm me-2"
-                                data-bind="click: function() { $parent.toggleTaskStatus($data) },
+                            <button class="btn btn-warning btn-sm me-2"
+                                    data-bind="click: function() { $parentContext.$parent.toggleTaskStatus($data) },
                    visible: status() === true">
-                            Mark as Undone
-                        </button>
+                                Mark as Undone
+                            </button>
 
-                        <!-- Checkmark -->
-                        <span class="text-success" data-bind="visible: status()">
-                            <i class="bi bi-check-circle"></i> Done
-                        </span>
+                            <!-- Checkmark -->
+                            <span class="text-success" data-bind="visible: status()">
+                                <i class="bi bi-check-circle"></i> Done
+                            </span>
 
-                        <!-- Delete Button -->
-                        <button class="btn btn-danger btn-sm" data-bind="click: function() { $parent.deleteTask($data) }">Delete</button>
+                            <!-- Delete Button -->
+                            <button class="btn btn-danger btn-sm"
+                                    data-bind="click: function() {
+            if (confirm('Are you sure you want to delete this task?')) {
+                $parentContext.$parent.deleteTask($data);
+            }
+        }">
+                                Delete
+                            </button>
 
-                        <!-- Update Button -->
-                        <button class="btn btn-primary btn-sm" data-bind="click: function() { $parent.startEditTask($data) }">Edit</button>
+                            <!-- Edit Button -->
+                            <button class="btn btn-primary btn-sm"
+                                    data-bind="click: function() {
+                                    $parentContext.$parent.startEditTask($data);
+                                    $('#editTaskModal').modal('show');
+                                },
+                   visible: status() === false">
+                                Edit
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control" placeholder="Edit task name" data-bind="value: editedTaskName">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-bind="click: cancelEdit">Cancel</button>
+                <button type="button" class="btn btn-primary" data-bind="click: updateTask">Save</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Edit Task Section -->
-<div id="editTaskSection" class="mt-4" data-bind="visible: isEditing">
-    <h3>Edit Task</h3>
-    <input type="text" class="form-control" placeholder="Edit task name" data-bind="value: editedTaskName">
-    <button class="btn btn-primary mt-2" data-bind="click: updateTask">Save</button>
-    <button class="btn btn-secondary mt-2" data-bind="click: cancelEdit">Cancel</button>
-</div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
 @* <script src="./js/TasksViewModel.js"></script> *@
@@ -77,6 +107,15 @@
         self.tasks = ko.observableArray([]); // Array to hold tasks
         self.newTask = ko.observable(""); // New task input value
 
+            self.tasksInRows = ko.computed(function () {
+                var rows = [];
+                for (var i = 0; i < self.tasks().length; i += 3) {
+                    rows.push(self.tasks().slice(i, i + 3)); // Group tasks into rows of 3
+                }
+                return rows;
+            });
+
+        
         // Observables for editing tasks
         self.isEditing = ko.observable(false); // To control visibility of the edit section
         self.editedTaskId = ko.observable(null); // ID of the task being edited
@@ -92,26 +131,29 @@
                         self.tasks(data.map(task => ({
                             taskName: task.taskName,
                             id: task.id,
-                            status: ko.observable(task.status || false) // Ensure status is an observable
+                            status: ko.observable(task.status) // Ensure status is an observable
+
                         })));
                     }
                 })
+
                 .catch(error => console.error("Error fetching tasks:", error));
+
         };
         // Start editing a task
         self.startEditTask = function (task) {
             self.isEditing(true);
             self.editedTaskId(task.id);
             self.editedTaskName(task.taskName);
+            $('#editTaskModal').modal('show');
         };
-
         // Cancel editing
         self.cancelEdit = function () {
             self.isEditing(false);
             self.editedTaskId(null);
             self.editedTaskName("");
+            $('#editTaskModal').modal('hide'); // Close the modal
         };
-
         // Update a task
         self.updateTask = function (task) {
             var taskId = self.editedTaskId();
@@ -143,7 +185,6 @@
             } else {
                 alert("Task name cannot be empty.");
             }
-
         };
         // Add a new task
         self.addTask = function () {
@@ -178,15 +219,24 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        // Toggle status observable
-                        task.status(!task.status());  // This will automatically trigger Knockout.js binding
+                        // Update the task's status in the observable
+                        console.log(task.status());
+                        if (task.status()) {
+                            task.status(false);  // This will trigger Knockout.js to apply the binding and strike-through
+
+                        }
+                        else {
+                            task.status(true);
+                        }
+
+                        // Optionally, refetch tasks to make sure the UI is synchronized with the database
+                        // self.fetchTasks(self.UserID);
                     } else {
                         alert("Failed to update task status.");
                     }
                 })
                 .catch(error => console.error("Error toggling task status:", error));
         };
-
 
         // Delete a task
         self.deleteTask = function (task) {
@@ -209,7 +259,6 @@
             self.fetchTasks(userId);
         };
     }
-
 
     // Initialize ViewModel and bind to view
     var viewModel = new TaskViewModel();

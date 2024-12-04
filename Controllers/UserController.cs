@@ -105,16 +105,17 @@ namespace TodoList1.Controllers;//standard method
             return View();
         }
 
-        [HttpGet]
+        /*[HttpGet]*/
         public IActionResult Logout()
         {
         // Clear session or authentication cookies
         //HttpContext.Session.Clear(); // If using sessions
-        HttpContext.Session.Remove("UserId");
+        /*HttpContext.Session.Remove("UserId");
         HttpContext.Session.Remove("Username");
 
-        Response.Cookies.Delete(".AspNetCore.Session"); // If using cookie-based authentication
-            return RedirectToAction("Login", "User"); // Redirect to the Login page
+        Response.Cookies.Delete(".AspNetCore.Session"); // If using cookie-based authentication*/
+        HttpContext.Session.Clear();
+        return RedirectToAction("Login", "User"); // Redirect to the Login page
         }
 
 
