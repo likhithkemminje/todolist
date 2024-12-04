@@ -1,5 +1,4 @@
-﻿
-@{
+﻿@{
     ViewData["Title"] = "Login";
 }
 
@@ -7,76 +6,117 @@
     <h2 class="text-center">Login</h2>
     <div data-bind="with: loginViewModel">
         <form>
+            <!-- Email Field -->
             <div class="form-group">
                 <label for="Email">Email Address</label>
-                <input type="email" class="form-control" id="Email" data-bind="value: email" placeholder="Enter your email" required />
+                <input type="email" class="form-control" id="Email" data-bind="value: email, event: { blur: validateEmail }" placeholder="Enter your email" required />
+                <p class="text-danger mt-1" data-bind="text: emailError, visible: emailError"></p>
             </div>
 
+            <!-- Password Field -->
             <div class="form-group mt-3">
                 <label for="Password">Password</label>
-                <input type="password" class="form-control" id="Password" data-bind="value: password" placeholder="Enter your password" required />
+                <input type="password" class="form-control" id="Password" data-bind="value: password, event: { blur: validatePassword }" placeholder="Enter your password" required />
+                <p class="text-danger mt-1" data-bind="text: passwordError, visible: passwordError"></p>
             </div>
 
-            <!-- Button now explicitly triggers the loginUser function -->
+            <!-- Login Button -->
             <button type="button" class="btn btn-primary mt-4 w-100" data-bind="click: loginUser">Login</button>
         </form>
 
+        <!-- General Error Message -->
         <div class="text-center mt-3">
             <p data-bind="text: errorMessage, visible: errorMessage" class="text-danger"></p>
+        </div>
+
+        <!-- Signup Link -->
+        <div class="text-center mt-4">
+            <p>Don't have an account? <a href="/User/SignUp" class="text-primary">Create a new account</a></p>
         </div>
     </div>
 </div>
 
-
-
-
 <!-- Include jQuery library (place this before your custom scripts) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/knockout@3.5.1/build/output/knockout-latest.js"></script>
+<script src="~/js/LoginViewModel.js"></script>
 
-<script>
-    function LoginViewModel() {
-        var self = this;
 
-        // Observables for form fields
-        self.email = ko.observable("");
-        self.password = ko.observable("");
-        self.errorMessage = ko.observable("");
 
-        // Login function
-        self.loginUser = function () {
-            self.errorMessage(""); // Clear any previous error message
 
-            // Validate form inputs
-            if (!self.email() || !self.password()) {
-                self.errorMessage("Both email and password are required.");
-                return;
-            }
 
-            // Perform AJAX POST request to login API
-            $.ajax({
-                url: "/User/Login/Login", // Backend login API endpoint
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({
-                    Email: self.email(),
-                    Password: self.password()
-                }),
-                success: function (response) {
-                    // Redirect to task page on successful login
-                    window.location.href = "/Task/Viewtask"; // Change this URL to your desired route
-                },
-                error: function (xhr) {
-                    // Show error message
-                    self.errorMessage(xhr.responseText || "Login failed. Please try again.");
+@* <script>
+    @(Html.Raw(@"
+        function LoginViewModel() {
+            var self = this;
+
+            // Observables for form fields
+            self.email = ko.observable('');
+            self.password = ko.observable('');
+
+            // Observables for validation error messages
+            self.emailError = ko.observable('');
+            self.passwordError = ko.observable('');
+            self.errorMessage = ko.observable('');
+
+            // Validation functions
+            self.validateEmail = function () {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple email format regex
+                if (!self.email()) {
+                    self.emailError('Email is required.');
+                } else if (!emailRegex.test(self.email())) {
+                    self.emailError('Please enter a valid email address.');
+                } else {
+                    self.emailError('');
                 }
-            });
-        };
-    }
+            };
 
-    // Apply bindings after DOM is ready
-    $(document).ready(function () {
-        ko.applyBindings({ loginViewModel: new LoginViewModel() });
-    });
-</script>
+            self.validatePassword = function () {
+                if (!self.password()) {
+                    self.passwordError('Password is required.');
+                } else if (self.password().length < 6) {
+                    self.passwordError('Password must be at least 6 characters long.');
+                } else {
+                    self.passwordError('');
+                }
+            };
+
+            // Login function
+            self.loginUser = function () {
+                self.errorMessage(''); // Clear previous error messages
+                self.validateEmail();
+                self.validatePassword();
+
+                // Stop if there are validation errors
+                if (self.emailError() || self.passwordError()) {
+                    return;
+                }
+
+                // Perform AJAX POST request to login API
+                $.ajax({
+                    url: '/User/Login/Login', // Backend login API endpoint
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Email: self.email(),
+                        Password: self.password()
+                    }),
+                    success: function (response) {
+                        // Redirect to task page on successful login
+                        window.location.href = '/Task/Viewtask'; // Change this URL to your desired route
+                    },
+                    error: function (xhr) {
+                        // Show error message
+                        self.errorMessage(xhr.responseText || 'Login failed. Please try again.');
+                    }
+                });
+            };
+        }
+
+        // Apply bindings after DOM is ready
+        $(document).ready(function () {
+            ko.applyBindings({ loginViewModel: new LoginViewModel() });
+        });
+    "))
+</script> *@
+

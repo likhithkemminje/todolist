@@ -27,9 +27,16 @@
 
                     <div class="d-flex justify-content-between">
                         <!-- Mark as Done Button -->
-                        <button class="btn btn-success btn-sm me-2"
-                                data-bind="click: function() { $parent.markTaskAsDone($data) }, visible: !status()">
+                        <button class="btn btn-sm me-2"
+                                data-bind="click: function() { $parent.toggleTaskStatus($data) },
+                   visible: status() === false">
                             Mark as Done
+                        </button>
+
+                        <button class="btn btn-warning btn-sm me-2"
+                                data-bind="click: function() { $parent.toggleTaskStatus($data) },
+                   visible: status() === true">
+                            Mark as Undone
                         </button>
 
                         <!-- Checkmark -->
@@ -57,11 +64,11 @@
     <button class="btn btn-secondary mt-2" data-bind="click: cancelEdit">Cancel</button>
 </div>
 
-
-
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout.js"></script>
-<script>
+@* <script src="./js/TasksViewModel.js"></script> *@
+
+
+ <script>
 
     // Knockout.js ViewModel to manage tasks
     function TaskViewModel() {
@@ -163,22 +170,23 @@
             }
         };
 
-        // Mark task as done
-        self.markTaskAsDone = function (task) {
-            fetch(`/Task/MarkTaskDone/mark-done/${task.id}`, {
+        // Toggle task status (Done/Undone)
+        self.toggleTaskStatus = function (task) {
+            fetch(`/Task/ToggleTaskStatus/toggle-status/${task.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" }
             })
                 .then(response => {
                     if (response.ok) {
-                        // Update the status observable to true (task done)
-                        task.status(true); // This will trigger the Knockout.js update for strike-through
+                        // Toggle status observable
+                        task.status(!task.status());  // This will automatically trigger Knockout.js binding
                     } else {
-                        alert("Failed to mark the task as done.");
+                        alert("Failed to update task status.");
                     }
                 })
-                .catch(error => console.error("Error marking task as done:", error));
+                .catch(error => console.error("Error toggling task status:", error));
         };
+
 
         // Delete a task
         self.deleteTask = function (task) {
@@ -216,5 +224,5 @@
         }
     }
 </script>
-
+ 
 
