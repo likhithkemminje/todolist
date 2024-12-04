@@ -77,7 +77,13 @@
                     window.location.href = "/User/Login"; // Redirect to login page
                 },
                 error: function (xhr) {
-                    self.errorMessage(xhr.responseJSON?.title || "Signup failed. Please try again.");
+                    if (xhr.status === 409) {
+                        // Handle specific "Email already exists" response
+                        self.errorMessage("Email already exists. Please use another email ID.");
+                    } else {
+                        // Handle other errors
+                        self.errorMessage(xhr.responseJSON?.title || "Signup failed. Please try again.");
+                    }
                 }
             });
         };

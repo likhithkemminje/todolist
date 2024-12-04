@@ -40,6 +40,13 @@ namespace TodoList1.Controllers
                 return BadRequest("Email and password are required.");
             }
 
+            // Check if the email already exists in the database
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existingUser != null)
+            {
+                return Conflict("Email already exists. Please use another email ID.");
+            }
+
             // Hash the password before storing it
             user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash);
 
