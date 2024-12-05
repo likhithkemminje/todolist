@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TodoList1.Data;
 using TodoList1.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Session;
 
 namespace TodoList1.Controllers;//standard method
 
@@ -25,7 +26,7 @@ namespace TodoList1.Controllers;//standard method
            
         }
 
-        //
+        
         [HttpPost("Signup")]
         public async Task<IActionResult> PostUser( UserModel user)
         {
@@ -105,16 +106,11 @@ namespace TodoList1.Controllers;//standard method
             return View();
         }
 
-        /*[HttpGet]*/
+        
         public IActionResult Logout()
         {
-        // Clear session or authentication cookies
-        //HttpContext.Session.Clear(); // If using sessions
-        /*HttpContext.Session.Remove("UserId");
-        HttpContext.Session.Remove("Username");
-
-        Response.Cookies.Delete(".AspNetCore.Session"); // If using cookie-based authentication*/
         HttpContext.Session.Clear();
+        HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
         return RedirectToAction("Login", "User"); // Redirect to the Login page
         }
 

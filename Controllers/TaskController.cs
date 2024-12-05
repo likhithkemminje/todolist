@@ -72,8 +72,6 @@ public class TaskController : Controller
         {
             return BadRequest("Task ID mismatch.");
         }
-
-
         // Find the existing task by ID
         var task = await _context.Tasks.FindAsync(id);
         if (task.UserId != updatedTask.UserId)
@@ -84,50 +82,15 @@ public class TaskController : Controller
         {
             return NotFound("Task not found.");
         }
-
         // Update the task's properties
         task.TaskName = updatedTask.TaskName;
         task.Status = updatedTask.Status;
         task.CompletedDate = updatedTask.CompletedDate;
-
-        // Save changes to the database
         await _context.SaveChangesAsync();
-
-        // Return a success response
         return Ok("Task updated successfully.");
 
     }
 
-
-    // Toggle task status (Done/Undone)
-    /*[HttpPut("toggle-status/{id}")]
-    public async Task<IActionResult> ToggleTaskStatus(int id)
-    {
-        var task = await _context.Tasks.FindAsync(id);
-        if (task == null)
-        {
-            return NotFound("Task not found");
-        }
-
-        // Toggle the status
-        task.Status = !task.Status;  // If true, mark as undone; if false, mark as done
-
-        // If the task is marked as done, set the CompletedDate to now
-        if (task.Status)
-        {
-            task.CompletedDate = DateTime.Now;
-        }
-        else
-        {
-            task.CompletedDate = null; // Clear the completed date if marking as undone
-        }
-
-        await _context.SaveChangesAsync();
-
-        // Return success message
-        var message = task.Status ? "Task marked as done successfully." : "Task marked as undone successfully.";
-        return Ok(message);
-    }*/
     [HttpPut("toggle-status/{id}")]
     public async Task<IActionResult> ToggleTaskStatus(int id)
     {
@@ -151,7 +114,6 @@ public class TaskController : Controller
 
         return Ok("Task status updated successfully.");
     }
-
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTasksByUserId(int id)
@@ -199,12 +161,5 @@ public class TaskController : Controller
         return View();
     }
 }
-
-   /* [HttpGet]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public IActionResult Viewtask()
-    {
-        return View();
-    }*/
 
 

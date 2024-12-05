@@ -31,13 +31,13 @@
                             <!-- Mark as Done Button -->
                             <button class="btn btn-sm me-2"
                                     data-bind="click: function() { $parentContext.$parent.toggleTaskStatus($data) },
-                   visible: status() === false">
+                                    visible: status() === false">
                                 Mark as Done
                             </button>
 
                             <button class="btn btn-warning btn-sm me-2"
                                     data-bind="click: function() { $parentContext.$parent.toggleTaskStatus($data) },
-                   visible: status() === true">
+                                    visible: status() === true">
                                 Mark as Undone
                             </button>
 
@@ -49,10 +49,10 @@
                             <!-- Delete Button -->
                             <button class="btn btn-danger btn-sm"
                                     data-bind="click: function() {
-            if (confirm('Are you sure you want to delete this task?')) {
-                $parentContext.$parent.deleteTask($data);
-            }
-        }">
+                                    if (confirm('Are you sure you want to delete this task?')) {
+                                    $parentContext.$parent.deleteTask($data);
+                                    }
+                                   }">
                                 Delete
                             </button>
 
@@ -61,8 +61,8 @@
                                     data-bind="click: function() {
                                     $parentContext.$parent.startEditTask($data);
                                     $('#editTaskModal').modal('show');
-                                },
-                   visible: status() === false">
+                                    },
+                                visible: status() === false">
                                 Edit
                             </button>
                         </div>
