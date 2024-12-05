@@ -107,12 +107,12 @@ namespace TodoList1.Controllers;//standard method
         }
 
         
-        public IActionResult Logout()
+        /*public IActionResult Logout()
         {
         HttpContext.Session.Clear();
         HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
         return RedirectToAction("Login", "User"); // Redirect to the Login page
-        }
+        }*/
 
 
 

@@ -70,9 +70,6 @@ builder.Services.AddScoped<IPasswordHasher<UserModel>, PasswordHasher<UserModel>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -89,7 +86,7 @@ else
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDo List API V1");
-        options.RoutePrefix = "swagger-api"; // Make Swagger UI available at the root
+        options.RoutePrefix = string.Empty; // Make Swagger UI available at the root
     });
 }
 
@@ -109,7 +106,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=User}/{action=SignUp}/{id?}");
 
-app.UseSwagger();
-app.UseSwaggerUI();
+/*app.UseSwagger();
+app.UseSwaggerUI();*/
 
 app.Run();
